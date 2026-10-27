@@ -1,16 +1,20 @@
 # Realtime Chat — FastAPI + WebSockets + Redis Pub/Sub
 
-A horizontally-scalable WebSocket chat server. Multiple FastAPI worker processes coordinate through **Redis Pub/Sub** so any user can talk to any other user regardless of which worker holds their socket.
+[CI results](https://github.com/umairjutt/realtime-chat-fastapi/actions) · [Engineering guide](PORTFOLIO.md)
+
+> **Status:** Realtime architecture demo. CI builds the images; token compatibility, presence and slow-client behavior require runtime verification.
+
+A WebSocket chat demo using Redis pub/sub across FastAPI worker processes, with PostgreSQL for message history.
 
 ## What this demonstrates
 
 - **FastAPI WebSocket** endpoints with async handlers
-- **Redis Pub/Sub** for cross-worker message fan-out (real horizontal scaling)
+- **Redis Pub/Sub** for cross-worker message fan-out
 - **Room-based** chat (multi-user channels)
 - **Presence tracking** (who's online) backed by Redis sets with TTL
 - **Persistent history** in Postgres (last 50 messages on join)
-- **JWT auth** at the WebSocket handshake (Authorization header)
-- **Backpressure-safe** broadcast (per-connection asyncio.Queue)
+- **JWT auth** at the WebSocket handshake using a query token in this demo
+- **Bounded broadcast queues** — per-connection `asyncio.Queue`; overflow currently drops messages
 - **Minimal React frontend** to interact with it
 
 ## Architecture
@@ -31,7 +35,7 @@ flowchart LR
     w1 --> redis2[(Redis: presence set)]
 ```
 
-The key trick: every worker subscribes to `room:{id}` channels on Redis. When User A sends a message, Worker 1 publishes to Redis; Worker 2 receives it and forwards to Users B + C over their sockets. This is exactly how production chat systems (Slack, Discord, etc.) scale.
+The key trick: every worker subscribes to `room:{id}` channels on Redis. When User A sends a message, Worker 1 publishes to Redis; Worker 2 receives it and forwards to Users B + C over their sockets. This illustrates the intended message path; production delivery and recovery guarantees have not been established.
 
 ## Tech stack
 
@@ -90,4 +94,4 @@ Server -> client messages:
 
 **Umair** &mdash; [@umairjutt](https://github.com/umairjutt)
 
-Designed, built and maintained by me. Licensed under the [MIT License](LICENSE).
+Maintained by [Umair Jutt](https://github.com/umairjutt). See [LICENSE](LICENSE) for repository licensing.
